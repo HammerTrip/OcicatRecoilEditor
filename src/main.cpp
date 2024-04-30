@@ -1,11 +1,4 @@
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
-
-#include <imconfig-SFML.h>
-#include <imgui-SFML.h>
-
-#include <imgui.h>
-
+#include "inc.h"
 #include "editor.h"
 
 using namespace ocicat;
@@ -15,6 +8,8 @@ int main (int argc, char* argv[]) {
 	window.setFramerateLimit(144);
 	if (!ImGui::SFML::Init(window)) return -1;
 
+	ImGuiIO& io = ImGui::GetIO();
+    	
 	editor_init();
 
 	sf::Clock deltaClock;
@@ -31,9 +26,12 @@ int main (int argc, char* argv[]) {
 			}
 
 			if (event.type == sf::Event::MouseButtonPressed) {
-				if (event.mouseButton.button == sf::Mouse::Button::Left) {
-					evnt_left_pressed();
-				}
+				if (event.mouseButton.button == sf::Mouse::Button::Left)
+					if (!io.WantCaptureMouse)
+						evnt_left_pressed();
+
+				if (event.mouseButton.button == sf::Mouse::Button::Right)
+					evnt_right_pressed();
 			}
 
 			if (event.type == sf::Event::MouseButtonReleased) {

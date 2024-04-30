@@ -1,8 +1,8 @@
 #pragma once
 
+#include "inc.h"
+
 #include <vector>
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
 
 namespace ocicat {
 	void editor_init ();
@@ -12,6 +12,8 @@ namespace ocicat {
 	void evnt_left_released ();
 	void evnt_mouse_position (sf::Vector2i pos);
 };
+
+void evnt_right_pressed ();
 
 struct PatternPoint {
 	float time;
@@ -33,3 +35,6 @@ struct Pattern {
 };
 
 PatternPoint* get_selected_point (size_t index);
+
+sf::Vector2f mouse_to_canvas ();
+sf::Vector2f vec_to_canvas (sf::Vector2f vec);

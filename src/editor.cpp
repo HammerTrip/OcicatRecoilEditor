@@ -1,17 +1,13 @@
 #include "editor.h"
 
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
-
-#include <imconfig-SFML.h>
-#include <imgui-SFML.h>
-
-#include <imgui.h>
-
 static Pattern kPattern;
 
 static bool bDialogueReset = false;
 static bool bMoveSelectedPoint = false;
+
+static bool bRequestedOpenPopup = false;
+static sf::Vector2f popupMousePosition { 0, 0 };
+
 static size_t selectedPointIndex = 0;
 
 static sf::RectangleShape bgRect;
@@ -25,6 +21,22 @@ const sf::Vector2f crossSize { 400, 600 };
 const float crossThickness = 2;
 
 const float COORD_TO_SCR_MLP = 10.f;
+
+const char* CONTEXT_MENU_ID = "ContextMenu";
+const char* IMGUI_TITLE = "The great Editor selfness.";
+
+
+
+sf::Vector2f vec_to_canvas (sf::Vector2f vec) {
+	sf::Vector2f v = vec - crossCenter;
+	v /= COORD_TO_SCR_MLP;
+
+	return v;
+}
+
+sf::Vector2f mouse_to_canvas () {
+	return vec_to_canvas(mousePosition);
+}
 
 
 
@@ -92,6 +104,19 @@ static void add_point () {
 	select_point(kPattern.points.size() - 1);
 }
 
+static void add_point_at_position (sf::Vector2f pos) {
+	add_point();
+
+	if (PatternPoint* p = get_selected_point(selectedPointIndex)) {
+		auto v = pos;
+
+		p->x = v.x;
+		p->y = v.y;
+
+		p->set_position(v * COORD_TO_SCR_MLP);
+	}
+}
+
 static void remove_point () {
 	if (kPattern.points.size() == 0)
 		return;
@@ -103,12 +128,12 @@ static void remove_point () {
 }
 
 static void draw_imgui () {
-	ImGui::SetNextWindowPos({ crossSize.x, 0 }, ImGuiCond_Once);
-	ImGui::SetNextWindowSize({ crossSize.x, crossSize.y }, ImGuiCond_Once);
+	ImGui::SetNextWindowPos({ crossSize.x, 0 }, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize({ crossSize.x, crossSize.y }, ImGuiCond_FirstUseEver);
 
 	uint32_t flags = 0;
 
-	if (ImGui::Begin("щсшсфе кусщшд увшещк", nullptr, flags)) {
+	if (ImGui::Begin(IMGUI_TITLE, nullptr, flags)) {
 		if (ImGui::Button("Clear pattern"))
 			bDialogueReset = true;
 		
@@ -136,7 +161,19 @@ static void draw_imgui () {
 
 			p.set_position({ x * COORD_TO_SCR_MLP, y * COORD_TO_SCR_MLP });
 		}
-		
+
+		if (bRequestedOpenPopup) {
+			ImGui::OpenPopup(CONTEXT_MENU_ID);
+			bRequestedOpenPopup = false;
+		}
+
+		if (ImGui::BeginPopup(CONTEXT_MENU_ID)) {
+			if (ImGui::Selectable("Make point here"))
+				add_point_at_position(vec_to_canvas(popupMousePosition));
+			
+			ImGui::EndPopup();
+		}
+
 		ImGui::End();
 	}
 }
@@ -184,8 +221,7 @@ void ocicat::editor_draw (sf::RenderWindow& wnd) {
 
 	if (bMoveSelectedPoint) {
 		if (PatternPoint* p = get_selected_point(selectedPointIndex)) {
-			sf::Vector2f pos = mousePosition - crossCenter;
-			pos /= COORD_TO_SCR_MLP;
+			sf::Vector2f pos = mouse_to_canvas();
 
 			p->x = pos.x;
 			p->y = pos.y;
@@ -197,8 +233,7 @@ void ocicat::editor_draw (sf::RenderWindow& wnd) {
 }
 
 void ocicat::evnt_left_pressed () {
-	sf::Vector2f mouseVec = mousePosition - crossCenter;
-	mouseVec /= COORD_TO_SCR_MLP;
+	auto mouseVec = mouse_to_canvas();
 
 	for (size_t i = 0; i < kPattern.points.size(); i++) {
 		PatternPoint& p = kPattern.points[i];
@@ -226,4 +261,9 @@ void ocicat::evnt_left_released () {
 void ocicat::evnt_mouse_position (sf::Vector2i pos) {
 	mousePosition.x = pos.x;
 	mousePosition.y = pos.y;
+}
+
+void evnt_right_pressed () {
+	bRequestedOpenPopup = true;
+	popupMousePosition = mousePosition;
 }
