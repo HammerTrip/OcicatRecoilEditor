@@ -1,6 +1,11 @@
 #include "editor.h"
 #include "pattern.h"
 
+#include <fstream>
+#include <json.hpp>
+
+#include <windows.h>
+
 static sf::Font FONT;
 
 static Pattern kPattern;
@@ -11,6 +16,7 @@ static bool bRequestedOpenPopup = false;
 static sf::Vector2f popupMousePosition { 0, 0 };
 
 static bool bRequestPatternClean = false;
+static bool bRequestPatternLoad = false;
 
 static size_t selectedPointIndex = 0;
 static size_t pointIdCounter = 0;
@@ -96,13 +102,15 @@ PatternPoint* get_selected_point (size_t index) {
 	return &kPattern.points[index];
 }
 
-static void add_point () {
+static PatternPoint* add_point () {
 	PatternPoint newpoint;
 	newpoint.id = pointIdCounter;
 	pointIdCounter++;
 	kPattern.points.push_back(newpoint);
 	
 	select_point(kPattern.points.size() - 1);
+
+	return &kPattern.points[selectedPointIndex];
 }
 
 static void add_point_at_position (sf::Vector2f pos) {
@@ -151,6 +159,19 @@ static void draw_imgui () {
 			ImGui::Selectable("No");
 
 			ImGui::EndPopup();
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Save")) {
+			editor_save();
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Load")) {
+			bRequestPatternClean = true;
+			bRequestPatternLoad = true;
 		}
 		
 		ImGui::NewLine();
@@ -280,6 +301,11 @@ void ocicat::editor_draw (sf::RenderWindow& wnd) {
 		editor_clear_pattern();
 	}
 
+	if (bRequestPatternLoad) {
+		bRequestPatternLoad = false;
+		editor_load();
+	}
+
 	if (bMoveSelectedPoint) {
 		if (PatternPoint* p = get_selected_point(selectedPointIndex)) {
 			sf::Vector2f pos = mouse_to_canvas();
@@ -330,4 +356,91 @@ void evnt_right_pressed () {
 
 	bRequestedOpenPopup = true;
 	popupMousePosition = mousePosition;
+}
+
+void editor_save () {
+	OPENFILENAME f;
+	char filename [MAX_PATH];
+
+	memset(&f, 0, sizeof(f));
+	memset(filename, 0, sizeof(filename));
+
+	f.lStructSize = sizeof(f); 
+	f.hwndOwner = NULL;
+	f.lpstrFilter = TEXT("Json File (*.json)\0*.json\0All Files (*.*)\0*.*\0");
+	f.lpstrFile = filename;
+	f.nMaxFile = MAX_PATH;
+	f.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+	f.lpstrDefExt = TEXT("json");
+
+	GetSaveFileName(&f);
+
+	using namespace nlohmann;
+
+	json j;
+	
+	j["size"] = kPattern.points.size();
+
+	for (size_t i = 0; i < kPattern.points.size(); i++) {
+		const std::string id = std::to_string(i);
+		
+		PatternPoint& p = kPattern.points[i];
+
+		j[id]["x"] = p.x;
+		j[id]["y"] = p.y;
+		j[id]["time"] = p.time;
+	}
+
+	std::ofstream fs { filename };
+	fs << std::setw(6) << j << std::endl;
+}
+
+void editor_load () {
+	OPENFILENAME f;
+	char filename [MAX_PATH];
+
+	memset(&f, 0, sizeof(f));
+	memset(filename, 0, sizeof(filename));
+
+	f.lStructSize = sizeof(f); 
+	f.hwndOwner = NULL;
+	f.lpstrFilter = TEXT("Json File (*.json)\0*.json\0All Files (*.*)\0*.*\0");
+	f.lpstrFile = filename;
+	f.nMaxFile = MAX_PATH;
+	f.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+	f.lpstrDefExt = TEXT("json");
+
+	GetOpenFileName(&f);
+
+	std::ifstream fs { filename };
+	
+	using namespace nlohmann;
+	
+	json j;
+	fs >> j;
+
+	size_t size = j["size"].template get<int>();
+
+	for (size_t i = 0; i < size; i++) {
+		std::string id = std::to_string(i);
+
+		float x = j[id]["x"].template get<float>();
+		float y = j[id]["y"].template get<float>();
+		float time = j[id]["time"].template get<float>();
+
+		PatternPoint pl;
+		pl.x = x;
+		pl.y = y;
+		pl.time = time;
+
+		PatternPoint* p = add_point();
+		*p = pl;
+	}
+
+	editor_sort_points();
+
+	for (auto& p : kPattern.points) {
+		p.set_selected(false);
+		p.set_position(sf::Vector2f(p.x, p.y) * COORD_TO_SCR_MLP);
+	}
 }
