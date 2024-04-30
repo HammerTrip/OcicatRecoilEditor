@@ -51,18 +51,11 @@ set(ocicat_link_dirs
 )
 
 set(ocicat_libs
-	flac
 	freetype
-	ogg
-	openal32
-	sfml-audio-d
 	sfml-graphics-d
 	sfml-main-d
 	sfml-system-d
 	sfml-window-d
-	vorbis
-	vorbisenc
-	vorbisfile
 	${OPENGL_LIBRARIES}
 )
 
