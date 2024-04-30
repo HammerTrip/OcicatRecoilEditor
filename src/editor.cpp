@@ -11,11 +11,22 @@
 static Pattern kPattern;
 
 static bool bDialogueReset = false;
+static bool bMoveSelectedPoint = false;
 static size_t selectedPointIndex = 0;
 
 static sf::RectangleShape bgRect;
 static sf::RectangleShape bgLineHorizontal;
 static sf::RectangleShape bgLineVertical;
+
+static sf::Vector2f mousePosition;
+
+const sf::Vector2f crossCenter { 200, 300 };
+const sf::Vector2f crossSize { 400, 600 };
+const float crossThickness = 2;
+
+const float COORD_TO_SCR_MLP = 10.f;
+
+
 
 PatternPoint::PatternPoint () {
 	x = 0;
@@ -44,7 +55,30 @@ void PatternPoint::set_selected (bool bSelected) {
 		circle.setFillColor(cNot);
 }
 
-static PatternPoint* get_selected_point (size_t index) {
+bool PatternPoint::is_inside (sf::Vector2f point) {
+	const sf::Vector2f distance = sf::Vector2f(x, y) - point;
+	const float radius = circle.getRadius();
+	
+	float distance_squared = distance.x * distance.x + distance.y * distance.y;
+
+	bool result = distance_squared <= (radius * radius);
+
+	return result;
+}
+
+
+
+static void select_point (size_t index) {
+	if (PatternPoint* p = get_selected_point(selectedPointIndex))
+		p->set_selected(false);
+	
+	selectedPointIndex = index;
+
+	if (PatternPoint* p = get_selected_point(selectedPointIndex))
+		p->set_selected(true);
+}
+
+PatternPoint* get_selected_point (size_t index) {
 	if (index >= kPattern.points.size())
 		return nullptr;
 
@@ -52,14 +86,10 @@ static PatternPoint* get_selected_point (size_t index) {
 }
 
 static void add_point () {
-	if (PatternPoint* p = get_selected_point(selectedPointIndex))
-		p->set_selected(false);
-
 	PatternPoint newpoint;
-	newpoint.set_selected(true);
-
 	kPattern.points.push_back(newpoint);
-	selectedPointIndex = kPattern.points.size() - 1;
+	
+	select_point(kPattern.points.size() - 1);
 }
 
 static void remove_point () {
@@ -73,8 +103,8 @@ static void remove_point () {
 }
 
 static void draw_imgui () {
-	ImGui::SetNextWindowPos({ 400, 40 }, ImGuiCond_Once);
-	ImGui::SetNextWindowSize({ 400, 600 }, ImGuiCond_Once);
+	ImGui::SetNextWindowPos({ crossSize.x, 0 }, ImGuiCond_Once);
+	ImGui::SetNextWindowSize({ crossSize.x, crossSize.y }, ImGuiCond_Once);
 
 	uint32_t flags = 0;
 
@@ -104,7 +134,7 @@ static void draw_imgui () {
 			p.x = x;
 			p.y = y;
 
-			p.set_position({ x * 10, y * 10 });
+			p.set_position({ x * COORD_TO_SCR_MLP, y * COORD_TO_SCR_MLP });
 		}
 		
 		ImGui::End();
@@ -123,21 +153,21 @@ static void editor_draw_pattern (sf::RenderWindow& wnd) {
 	}
 }
 
-void editor_init () {
-	bgRect.setPosition({ 10, 10 });
-	bgRect.setSize({ 400, 600 });
+void ocicat::editor_init () {
+	bgRect.setPosition({ 0, 0 });
+	bgRect.setSize({ crossSize.x, crossSize.y });
 	bgRect.setFillColor(sf::Color::White);
 
-	bgLineHorizontal.setPosition({ 10, 10 + 600 / 2 });
-	bgLineHorizontal.setSize({ 400, 2 });
+	bgLineHorizontal.setPosition({ 0, crossSize.y / 2.f });
+	bgLineHorizontal.setSize({ crossSize.x, crossThickness });
 	bgLineHorizontal.setFillColor(sf::Color::Black);
 
-	bgLineVertical.setPosition({ 10 + 400 / 2, 10 });
-	bgLineVertical.setSize({ 2, 600 });
+	bgLineVertical.setPosition({ crossSize.x / 2, 0 });
+	bgLineVertical.setSize({ crossThickness, crossSize.y });
 	bgLineVertical.setFillColor(sf::Color::Black);
 }
 
-void editor_draw (sf::RenderWindow& wnd) {
+void ocicat::editor_draw (sf::RenderWindow& wnd) {
 	draw_imgui();
 
 	if (bDialogueReset) {
@@ -152,5 +182,48 @@ void editor_draw (sf::RenderWindow& wnd) {
 		}
 	}
 
+	if (bMoveSelectedPoint) {
+		if (PatternPoint* p = get_selected_point(selectedPointIndex)) {
+			sf::Vector2f pos = mousePosition - crossCenter;
+			pos /= COORD_TO_SCR_MLP;
+
+			p->x = pos.x;
+			p->y = pos.y;
+			p->set_position(pos * COORD_TO_SCR_MLP);
+		}
+	}
+
 	editor_draw_pattern(wnd);
+}
+
+void ocicat::evnt_left_pressed () {
+	sf::Vector2f mouseVec = mousePosition - crossCenter;
+	mouseVec /= COORD_TO_SCR_MLP;
+
+	for (size_t i = 0; i < kPattern.points.size(); i++) {
+		PatternPoint& p = kPattern.points[i];
+
+		if (p.is_inside(mouseVec) && i != selectedPointIndex) {
+			select_point(i);
+			return;
+		}
+	}
+
+	for (size_t i = 0; i < kPattern.points.size(); i++) {
+		PatternPoint& p = kPattern.points[i];
+
+		if (p.is_inside(mouseVec) && i == selectedPointIndex) {
+			bMoveSelectedPoint = true;
+			return;
+		}
+	}
+}
+
+void ocicat::evnt_left_released () {
+	bMoveSelectedPoint = false;
+}
+
+void ocicat::evnt_mouse_position (sf::Vector2i pos) {
+	mousePosition.x = pos.x;
+	mousePosition.y = pos.y;
 }
