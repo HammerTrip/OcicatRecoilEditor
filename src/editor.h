@@ -19,3 +19,4 @@ sf::Vector2f mouse_to_canvas ();
 sf::Vector2f vec_to_canvas (sf::Vector2f vec);
 
 void editor_clear_pattern ();
+void editor_sort_points ();

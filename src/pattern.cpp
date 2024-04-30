@@ -1,6 +1,7 @@
 #include "pattern.h"
 
 PatternPoint::PatternPoint () {
+	id = 0;
 	x = 0;
 	y = 0;
 	time = 0;

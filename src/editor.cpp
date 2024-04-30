@@ -13,6 +13,7 @@ static sf::Vector2f popupMousePosition { 0, 0 };
 static bool bRequestPatternClean = false;
 
 static size_t selectedPointIndex = 0;
+static size_t pointIdCounter = 0;
 
 static sf::RectangleShape bgRect;
 static sf::RectangleShape bgLineHorizontal;
@@ -53,6 +54,29 @@ void editor_clear_pattern () {
 	selectedPointIndex = 0;
 }
 
+void editor_sort_points () {
+	size_t saved_selected_index = 0;
+
+	if (PatternPoint* p = get_selected_point(selectedPointIndex))
+		saved_selected_index = p->id;
+	
+	std::sort(kPattern.points.begin(), kPattern.points.end(), [] (const PatternPoint& a, const PatternPoint& b) {
+		if (a.time != 0 || b.time != 0)
+			return a.time < b.time;
+		else
+			return a.id < b.id;
+	});
+
+	for (size_t i = 0; i < kPattern.points.size(); i++) {
+		PatternPoint& p = kPattern.points[i];
+		
+		if (saved_selected_index == p.id) {
+			selectedPointIndex = i;
+			break;
+		}
+	}
+}
+
 
 
 static void select_point (size_t index) {
@@ -74,6 +98,8 @@ PatternPoint* get_selected_point (size_t index) {
 
 static void add_point () {
 	PatternPoint newpoint;
+	newpoint.id = pointIdCounter;
+	pointIdCounter++;
 	kPattern.points.push_back(newpoint);
 	
 	select_point(kPattern.points.size() - 1);
@@ -142,6 +168,8 @@ static void draw_imgui () {
 			float x = p.x;
 			float y = p.y;
 
+			float old_time = p.time;
+
 			ImGui::SliderFloat("x", &x, -40.f, 40.f, "%.2f", 0);
 			ImGui::SliderFloat("y", &y, -60.f, 60.f, "%.2f", 0);
 			
@@ -153,6 +181,9 @@ static void draw_imgui () {
 			p.y = y;
 
 			p.set_position({ x * COORD_TO_SCR_MLP, y * COORD_TO_SCR_MLP });
+
+			if (p.time != old_time)
+				editor_sort_points();
 		}
 
 		if (bRequestedOpenPopup) {

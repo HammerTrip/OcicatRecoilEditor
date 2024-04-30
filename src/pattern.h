@@ -3,6 +3,8 @@
 #include "inc.h"
 
 struct PatternPoint {
+	size_t id;
+
 	float time;
 	float x;
 	float y;
