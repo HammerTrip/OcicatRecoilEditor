@@ -3,11 +3,12 @@
 
 static Pattern kPattern;
 
-static bool bDialogueReset = false;
 static bool bMoveSelectedPoint = false;
 
 static bool bRequestedOpenPopup = false;
 static sf::Vector2f popupMousePosition { 0, 0 };
+
+static bool bRequestPatternClean = false;
 
 static size_t selectedPointIndex = 0;
 
@@ -24,6 +25,8 @@ const float crossThickness = 2;
 const float COORD_TO_SCR_MLP = 10.f;
 
 const char* CONTEXT_MENU_ID = "ContextMenu";
+const char* CLEAR_MENU_ID = "ClearPattern";
+
 const char* IMGUI_TITLE = "The great Editor selfness.";
 
 
@@ -41,6 +44,11 @@ sf::Vector2f vec_to_canvas (sf::Vector2f vec) {
 
 sf::Vector2f mouse_to_canvas () {
 	return vec_to_canvas(mousePosition);
+}
+
+void editor_clear_pattern () {
+	kPattern = Pattern();
+	selectedPointIndex = 0;
 }
 
 
@@ -100,7 +108,22 @@ static void draw_imgui () {
 
 	if (ImGui::Begin(IMGUI_TITLE, nullptr, flags)) {
 		if (ImGui::Button("Clear pattern"))
-			bDialogueReset = true;
+			ImGui::OpenPopup(CLEAR_MENU_ID);
+		
+		if (ImGui::BeginPopup(CLEAR_MENU_ID)) {
+			ImGui::Text("Are you sure?");
+
+			ImGui::NewLine();
+
+			if (ImGui::Selectable("Yes"))
+				bRequestPatternClean = true;
+
+			ImGui::NewLine();
+			
+			ImGui::Selectable("No");
+
+			ImGui::EndPopup();
+		}
 		
 		ImGui::NewLine();
 
@@ -143,6 +166,22 @@ static void draw_imgui () {
 	}
 }
 
+static void draw_arrow (PatternPoint& a, PatternPoint& b, sf::RenderWindow& wnd) {
+	const auto va = a.circle.getPosition();
+	const auto vb = b.circle.getPosition();
+
+	const size_t VTX_COUNT = 2;
+
+	sf::VertexArray lines = sf::VertexArray(sf::LinesStrip, VTX_COUNT);
+	lines[0].position = va;
+	lines[1].position = vb;
+
+	for (size_t i = 0; i < VTX_COUNT; i++)
+		lines[i].color = sf::Color::Black;
+
+	wnd.draw(lines);
+}
+
 static void editor_draw_pattern (sf::RenderWindow& wnd) {
 	wnd.draw(bgRect);
 	wnd.draw(bgLineHorizontal);
@@ -152,6 +191,16 @@ static void editor_draw_pattern (sf::RenderWindow& wnd) {
 		PatternPoint& p = kPattern.points[i];
 
 		wnd.draw(p.circle);
+	}
+
+	for (int i = 0; i < kPattern.points.size(); i++) {
+		PatternPoint& p = kPattern.points[i];
+
+		wnd.draw(p.circle);
+
+		if (i > 0) {
+			draw_arrow(kPattern.points[i - 1], p, wnd);
+		}
 	}
 }
 
@@ -172,16 +221,9 @@ void ocicat::editor_init () {
 void ocicat::editor_draw (sf::RenderWindow& wnd) {
 	draw_imgui();
 
-	if (bDialogueReset) {
-		if (ImGui::Begin("Are you sure?##1")) {
-			if (ImGui::Button("Yes")) {
-				bDialogueReset = false;
-				kPattern = Pattern();
-			}
-
-			if (ImGui::Button("No"))
-				bDialogueReset = false;
-		}
+	if (bRequestPatternClean) {
+		bRequestPatternClean = false;
+		editor_clear_pattern();
 	}
 
 	if (bMoveSelectedPoint) {
