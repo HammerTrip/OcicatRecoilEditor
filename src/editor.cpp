@@ -1,6 +1,8 @@
 #include "editor.h"
 #include "pattern.h"
 
+static sf::Font FONT;
+
 static Pattern kPattern;
 
 static bool bMoveSelectedPoint = false;
@@ -142,7 +144,10 @@ static void draw_imgui () {
 
 			ImGui::SliderFloat("x", &x, -40.f, 40.f, "%.2f", 0);
 			ImGui::SliderFloat("y", &y, -60.f, 60.f, "%.2f", 0);
+			
 			ImGui::SliderFloat("time", &p.time, 0, 15.f, "%.3f");
+			ImGui::SameLine();
+			ImGui::InputFloat("##time", &p.time, 0.05f, 0.15f, "%.3f");
 
 			p.x = x;
 			p.y = y;
@@ -172,7 +177,7 @@ static void draw_arrow (PatternPoint& a, PatternPoint& b, sf::RenderWindow& wnd)
 
 	const size_t VTX_COUNT = 2;
 
-	sf::VertexArray lines = sf::VertexArray(sf::LinesStrip, VTX_COUNT);
+	static sf::VertexArray lines = sf::VertexArray(sf::LinesStrip, VTX_COUNT);
 	lines[0].position = va;
 	lines[1].position = vb;
 
@@ -180,6 +185,20 @@ static void draw_arrow (PatternPoint& a, PatternPoint& b, sf::RenderWindow& wnd)
 		lines[i].color = sf::Color::Black;
 
 	wnd.draw(lines);
+}
+
+static void draw_point_number (PatternPoint& p, size_t n, sf::RenderWindow& wnd) {
+	sf::Text text;
+	text.setFont(FONT);
+	text.setString(std::to_string(n));
+
+	auto pos = p.circle.getPosition();
+
+	text.setPosition(pos + sf::Vector2f(8.f, 8.f));
+	text.setFillColor(sf::Color::Black);
+	text.setCharacterSize(16);
+
+	wnd.draw(text);
 }
 
 static void editor_draw_pattern (sf::RenderWindow& wnd) {
@@ -196,11 +215,11 @@ static void editor_draw_pattern (sf::RenderWindow& wnd) {
 	for (int i = 0; i < kPattern.points.size(); i++) {
 		PatternPoint& p = kPattern.points[i];
 
-		wnd.draw(p.circle);
-
 		if (i > 0) {
 			draw_arrow(kPattern.points[i - 1], p, wnd);
 		}
+
+		draw_point_number(p, i, wnd);
 	}
 }
 
@@ -216,6 +235,10 @@ void ocicat::editor_init () {
 	bgLineVertical.setPosition({ crossSize.x / 2, 0 });
 	bgLineVertical.setSize({ crossThickness, crossSize.y });
 	bgLineVertical.setFillColor(sf::Color::Black);
+
+	if (!FONT.loadFromFile("ProggyClean.ttf")) {
+		printf("Can't load font\n");
+	}
 }
 
 void ocicat::editor_draw (sf::RenderWindow& wnd) {
@@ -271,6 +294,9 @@ void ocicat::evnt_mouse_position (sf::Vector2i pos) {
 }
 
 void evnt_right_pressed () {
+	if (mousePosition.x >= crossSize.x || mousePosition.y >= crossSize.y)
+		return;
+
 	bRequestedOpenPopup = true;
 	popupMousePosition = mousePosition;
 }
