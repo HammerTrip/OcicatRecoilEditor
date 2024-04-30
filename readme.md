@@ -9,5 +9,5 @@ sfml, imgui, imgui-sfml, nlohmann json
 
 requires cmake, ninja  
 
-build.bat
+build.bat  
 ^w^
