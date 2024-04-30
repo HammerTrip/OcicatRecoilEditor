@@ -1,7 +1,13 @@
 # Ocicat Recoil Editor
 Because I am incapable of creating editor inside UE
 
+# dependencies
+
+sfml, imgui, imgui-sfml, nlohmann json
+
 # uhh um uh
 
-cmake, ninja, sfml, imgui, imgui-sfml \
-don't forget to copy sfml-*-d.dll to build folder
+requires cmake, ninja  
+
+build.bat  
+^w^
