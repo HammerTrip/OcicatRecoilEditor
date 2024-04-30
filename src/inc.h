@@ -7,3 +7,5 @@
 #include <imgui-SFML.h>
 
 #include <imgui.h>
+
+sf::Vector2f get_cross_center ();

@@ -13,6 +13,12 @@
 },
 {
   "directory": "E:/_ue_prj/OcicatRecoilEditor",
+  "command": "E:\\llvm\\bin\\clang++.exe -IE:/_ue_prj/OcicatRecoilEditor/src -IE:/_ue_prj/OcicatRecoilEditor/lib -IE:/_ue_prj/OcicatRecoilEditor/lib/imgui -IE:/_ue_prj/OcicatRecoilEditor/lib/imgui/backends -IE:/_ue_prj/OcicatRecoilEditor/lib/imgui-sfml-2.6 -IE:/_ue_prj/OcicatRecoilEditor/lib/SFML-2.6.1/include -O0 -std=gnu++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\OcicatRecoilEditor.dir\\src\\pattern.cpp.obj -c E:\\_ue_prj\\OcicatRecoilEditor\\src\\pattern.cpp",
+  "file": "E:\\_ue_prj\\OcicatRecoilEditor\\src\\pattern.cpp",
+  "output": "CMakeFiles\\OcicatRecoilEditor.dir\\src\\pattern.cpp.obj"
+},
+{
+  "directory": "E:/_ue_prj/OcicatRecoilEditor",
   "command": "E:\\llvm\\bin\\clang++.exe -IE:/_ue_prj/OcicatRecoilEditor/src -IE:/_ue_prj/OcicatRecoilEditor/lib -IE:/_ue_prj/OcicatRecoilEditor/lib/imgui -IE:/_ue_prj/OcicatRecoilEditor/lib/imgui/backends -IE:/_ue_prj/OcicatRecoilEditor/lib/imgui-sfml-2.6 -IE:/_ue_prj/OcicatRecoilEditor/lib/SFML-2.6.1/include -O0 -std=gnu++23 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -g -Xclang -gcodeview -o CMakeFiles\\OcicatRecoilEditor.dir\\lib\\imgui-sfml-2.6\\imgui-SFML.cpp.obj -c E:\\_ue_prj\\OcicatRecoilEditor\\lib\\imgui-sfml-2.6\\imgui-SFML.cpp",
   "file": "E:\\_ue_prj\\OcicatRecoilEditor\\lib\\imgui-sfml-2.6\\imgui-SFML.cpp",
   "output": "CMakeFiles\\OcicatRecoilEditor.dir\\lib\\imgui-sfml-2.6\\imgui-SFML.cpp.obj"
