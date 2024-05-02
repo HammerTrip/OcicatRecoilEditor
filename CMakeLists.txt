@@ -31,9 +31,12 @@ set(imgui_headers
 )
 
 set(ocicat_src
+	"src/platform_win.cpp"
+
 	"src/main.cpp"
 	"src/editor.cpp"
 	"src/pattern.cpp"
+
 	"lib/imgui-sfml-2.6/imgui-SFML.cpp"
 	${imgui_src}
 )

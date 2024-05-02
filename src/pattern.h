@@ -20,7 +20,12 @@ struct PatternPoint {
 };
 
 struct Pattern {
+	static const size_t MAX_NAME = 64;
+	char name[MAX_NAME];
+
 	std::vector<PatternPoint> points;
+
+	Pattern ();
 };
 
 PatternPoint* get_selected_point (size_t index);

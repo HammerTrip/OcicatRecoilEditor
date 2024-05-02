@@ -38,3 +38,9 @@ bool PatternPoint::is_inside (sf::Vector2f point) {
 
 	return result;
 }
+
+
+
+Pattern::Pattern () {
+	memset(name, 0, MAX_NAME);
+}

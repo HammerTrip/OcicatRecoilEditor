@@ -1,10 +1,9 @@
 #include "editor.h"
 #include "pattern.h"
+#include "platform.h"
 
 #include <fstream>
 #include <json.hpp>
-
-#include <windows.h>
 
 static sf::Font FONT;
 
@@ -174,6 +173,10 @@ static void draw_imgui () {
 			bRequestPatternLoad = true;
 		}
 		
+		ImGui::NewLine();
+
+		ImGui::InputText("Pattern name", kPattern.name, Pattern::MAX_NAME);
+
 		ImGui::NewLine();
 
 		if (ImGui::Button("Add point"))
@@ -359,27 +362,14 @@ void evnt_right_pressed () {
 }
 
 void editor_save () {
-	OPENFILENAME f;
-	char filename [MAX_PATH];
-
-	memset(&f, 0, sizeof(f));
-	memset(filename, 0, sizeof(filename));
-
-	f.lStructSize = sizeof(f); 
-	f.hwndOwner = NULL;
-	f.lpstrFilter = TEXT("Json File (*.json)\0*.json\0All Files (*.*)\0*.*\0");
-	f.lpstrFile = filename;
-	f.nMaxFile = MAX_PATH;
-	f.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-	f.lpstrDefExt = TEXT("json");
-
-	GetSaveFileName(&f);
+	std::string filename = pf_get_save_file();
 
 	using namespace nlohmann;
 
 	json j;
 	
 	j["size"] = kPattern.points.size();
+	j["name"] = kPattern.name;
 
 	for (size_t i = 0; i < kPattern.points.size(); i++) {
 		const std::string id = std::to_string(i);
@@ -396,21 +386,7 @@ void editor_save () {
 }
 
 void editor_load () {
-	OPENFILENAME f;
-	char filename [MAX_PATH];
-
-	memset(&f, 0, sizeof(f));
-	memset(filename, 0, sizeof(filename));
-
-	f.lStructSize = sizeof(f); 
-	f.hwndOwner = NULL;
-	f.lpstrFilter = TEXT("Json File (*.json)\0*.json\0All Files (*.*)\0*.*\0");
-	f.lpstrFile = filename;
-	f.nMaxFile = MAX_PATH;
-	f.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
-	f.lpstrDefExt = TEXT("json");
-
-	GetOpenFileName(&f);
+	std::string filename = pf_get_open_file();
 
 	std::ifstream fs { filename };
 	
@@ -420,6 +396,9 @@ void editor_load () {
 	fs >> j;
 
 	size_t size = j["size"].template get<int>();
+	auto name = j["name"].template get<std::string>();
+
+	memcpy(kPattern.name, name.data(), name.size());
 
 	for (size_t i = 0; i < size; i++) {
 		std::string id = std::to_string(i);
