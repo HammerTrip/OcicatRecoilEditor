@@ -5,6 +5,11 @@ using namespace ocicat;
 
 int main (int argc, char* argv[]) {
 	sf::RenderWindow window(sf::VideoMode(800, 600), "Ocicat Recoil Editor");
+
+	sf::View view = sf::View(sf::Vector2f(400, 300), sf::Vector2f(800, 600));
+	
+	window.setView(view);
+
 	window.setFramerateLimit(144);
 	if (!ImGui::SFML::Init(window)) return -1;
 
@@ -38,6 +43,16 @@ int main (int argc, char* argv[]) {
 				if (event.mouseButton.button == sf::Mouse::Button::Left) {
 					evnt_left_released();
 				}
+			}
+
+			if (event.type == sf::Event::Resized) {
+				float w = event.size.width;
+				float h = event.size.height;
+
+				view.setCenter(w / 2.f, h / 2.f);
+				view.setSize(event.size.width, event.size.height);
+				
+				window.setView(view);
 			}
 		}
 
