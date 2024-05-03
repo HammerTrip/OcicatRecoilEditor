@@ -364,6 +364,13 @@ void evnt_right_pressed () {
 void editor_save () {
 	std::string filename = pf_get_save_file();
 
+	printf("Save filename: %s\n", filename.c_str());
+
+	if (filename.empty() || filename == "") {
+		fprintf(stderr, "Empty filename for saving!\n");
+		return;
+	}
+
 	using namespace nlohmann;
 
 	json j;
@@ -387,6 +394,13 @@ void editor_save () {
 
 void editor_load () {
 	std::string filename = pf_get_open_file();
+
+	printf("Load filename: %s\n", filename.c_str());
+
+	if (filename.empty() || filename == "") {
+		fprintf(stderr, "Empty filename to load!\n");
+		return;
+	}
 
 	std::ifstream fs { filename };
 	
