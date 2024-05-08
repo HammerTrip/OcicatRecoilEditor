@@ -37,6 +37,8 @@ const char* CLEAR_MENU_ID = "ClearPattern";
 
 const char* IMGUI_TITLE = "The great Editor selfness.";
 
+static float defaultTimeBonus = 0.3f;
+
 
 
 sf::Vector2f get_cross_center () {
@@ -85,6 +87,9 @@ void editor_sort_points () {
 
 
 static void select_point (size_t index) {
+	if (index >= kPattern.points.size())
+		index = 0;
+
 	if (PatternPoint* p = get_selected_point(selectedPointIndex))
 		p->set_selected(false);
 	
@@ -92,6 +97,36 @@ static void select_point (size_t index) {
 
 	if (PatternPoint* p = get_selected_point(selectedPointIndex))
 		p->set_selected(true);
+}
+
+static void select_point_prev () {
+	if (kPattern.points.size() <= 1)
+		return;
+
+	size_t index = selectedPointIndex;
+
+	if (index == 0)
+		index = kPattern.points.size() - 1;
+	else
+		index--;
+	
+	select_point(index);
+}
+
+static void select_point_next () {
+	if (kPattern.points.size() <= 1)
+		return;
+
+	size_t index = selectedPointIndex;
+
+	if (index == kPattern.points.size() - 1)
+		index = 0;
+	else
+		index++;
+
+	printf("selected %zu index %zu size %zu\n", selectedPointIndex, index, kPattern.points.size());
+	
+	select_point(index);
 }
 
 PatternPoint* get_selected_point (size_t index) {
@@ -104,10 +139,16 @@ PatternPoint* get_selected_point (size_t index) {
 static PatternPoint* add_point () {
 	PatternPoint newpoint;
 	newpoint.id = pointIdCounter;
+
+	if (kPattern.points.size() > 0)
+		newpoint.time = kPattern.points[kPattern.points.size() - 1].time + defaultTimeBonus;
+
 	pointIdCounter++;
 	kPattern.points.push_back(newpoint);
 	
 	select_point(kPattern.points.size() - 1);
+
+	editor_sort_points();
 
 	return &kPattern.points[selectedPointIndex];
 }
@@ -181,6 +222,16 @@ static void draw_imgui () {
 
 		if (ImGui::Button("Add point"))
 			add_point();
+		
+		ImGui::SameLine();
+
+		if (ImGui::Button("<-##SELECT_PREV"))
+			select_point_prev();
+		
+		ImGui::SameLine();
+
+		if (ImGui::Button("->##SELECT_NEXT"))
+			select_point_next();
 
 		ImGui::NewLine();
 
@@ -209,6 +260,10 @@ static void draw_imgui () {
 			if (p.time != old_time)
 				editor_sort_points();
 		}
+
+		ImGui::NewLine();
+
+		ImGui::SliderFloat("Default delta time", &defaultTimeBonus, 0.f, 2.f, "%.3f");
 
 		if (bRequestedOpenPopup) {
 			ImGui::OpenPopup(CONTEXT_MENU_ID);

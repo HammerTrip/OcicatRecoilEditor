@@ -14,6 +14,8 @@ int main (int argc, char* argv[]) {
 	if (!ImGui::SFML::Init(window)) return -1;
 
 	ImGuiIO& io = ImGui::GetIO();
+	io.LogFilename = nullptr;
+	io.IniFilename = nullptr; //TODO get path to directory with executable
     	
 	editor_init();
 
